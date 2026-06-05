@@ -1,4 +1,4 @@
-package com.clinic.backend.service;
+package com.clinic.backend.Service;
 
 import java.time.LocalDateTime;
 

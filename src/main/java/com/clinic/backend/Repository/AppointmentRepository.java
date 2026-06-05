@@ -1,10 +1,10 @@
-package com.clinic.backend.repository;
+package com.clinic.backend.Repository;
 
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.clinic.backend.entity.Appointment;
+import com.clinic.backend.Entity.Appointment;
 
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 

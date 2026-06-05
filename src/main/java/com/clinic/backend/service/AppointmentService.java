@@ -1,8 +1,8 @@
-package com.clinic.backend.service;
+package com.clinic.backend.Service;
 
 import java.util.List;
 
-import com.clinic.backend.entity.Appointment;
+import com.clinic.backend.Entity.Appointment;
 
 public interface AppointmentService {
 

@@ -1,4 +1,4 @@
-package com.clinic.backend.controller;
+package com.clinic.backend.Controller;
 
 import java.util.List;
 
@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.clinic.backend.Entity.Appointment;
+import com.clinic.backend.Service.AppointmentService;
+import com.clinic.backend.Service.DoctorService;
 import com.clinic.backend.dto.LoginRequest;
 import com.clinic.backend.dto.RegisterRequest;
 import com.clinic.backend.dto.StatusUpdateRequest;
-import com.clinic.backend.entity.Appointment;
-import com.clinic.backend.service.AppointmentService;
-import com.clinic.backend.service.DoctorService;
 
 @RestController
 @RequestMapping("/api/doctors")
