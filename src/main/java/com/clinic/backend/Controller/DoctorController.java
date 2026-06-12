@@ -2,6 +2,7 @@ package com.clinic.backend.Controller;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.clinic.backend.Entity.Appointment;
+import com.clinic.backend.Entity.Queue;
 import com.clinic.backend.Service.AppointmentService;
 import com.clinic.backend.Service.DoctorService;
 import com.clinic.backend.dto.LoginRequest;
@@ -36,6 +38,7 @@ public class DoctorController {
     // Doctor Registration
     @PostMapping("/register")
     public String registerDoctor(@RequestBody RegisterRequest request) {
+
         return doctorService.registerDoctor(
                 request.getName(),
                 request.getEmail(),
@@ -46,6 +49,7 @@ public class DoctorController {
     // Doctor Login
     @PostMapping("/login")
     public String loginDoctor(@RequestBody LoginRequest request) {
+
         return doctorService.loginDoctor(
                 request.getEmail(),
                 request.getPassword()
@@ -54,16 +58,64 @@ public class DoctorController {
 
     // Get all appointments for a doctor
     @GetMapping("/appointments")
-    public List<Appointment> getAppointments(@RequestParam Long doctorId) {
+    public List<Appointment> getAppointments(
+            @RequestParam Long doctorId) {
+
         return appointmentService.getAllAppointments(doctorId);
     }
 
-    // Accept or Reject appointment
+    // Accept / Reject Appointment
     @PutMapping("/appointments/{id}/status")
     public Appointment updateStatus(
             @PathVariable Long id,
             @RequestBody StatusUpdateRequest request) {
 
-        return appointmentService.updateStatus(id, request.getStatus());
+        return appointmentService.updateStatus(
+                id,
+                request.getStatus()
+        );
     }
+
+    // Doctor Dashboard
+    @GetMapping("/dashboard")
+    public ResponseEntity<?> getDashboard() {
+
+        return ResponseEntity.ok(
+                doctorService.getDashboardStats()
+        );
+    }
+
+    // Call Next Patient
+    @PutMapping("/queue/call-next")
+    public ResponseEntity<?> callNextPatient() {
+
+        return ResponseEntity.ok(
+                doctorService.callNextPatient()
+        );
+    }
+
+
+    // Complete Consultation
+    @PutMapping("/queue/complete/{queueId}")
+    public ResponseEntity<?> completeConsultation(
+            @PathVariable Long queueId) {
+
+        return ResponseEntity.ok(
+                doctorService.completeConsultation(queueId)
+        );
+}
+
+        @GetMapping("/queue")
+        public List<Queue> getQueue() {
+
+            return doctorService.getQueue();
+        }
+        @GetMapping("/queue/stats")
+public ResponseEntity<?> getQueueStats() {
+
+    return ResponseEntity.ok(
+            doctorService.getQueueStats()
+    );
+}
+
 }

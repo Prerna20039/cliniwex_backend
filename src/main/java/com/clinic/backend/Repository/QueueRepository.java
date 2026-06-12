@@ -9,11 +9,18 @@ import com.clinic.backend.Entity.Queue;
 
 public interface QueueRepository extends JpaRepository<Queue, Long> {
 
-    List<Queue> findAllByOrderByTokenNumberAsc();
+    long countByStatus(String status);
 
-    Optional<Queue> findFirstByStatusOrderByTokenNumberAsc(String status);
+    Optional<Queue> findByStatus(String status);
+
+    Optional<Queue> findByAppointmentId(Long appointmentId);
 
     Optional<Queue> findTopByOrderByTokenNumberDesc();
 
-    Optional<Queue> findByAppointmentId(Long appointmentId);
+    Optional<Queue> findFirstByStatusOrderByTokenNumberAsc(String status);
+
+    List<Queue> findAllByOrderByTokenNumberAsc();
+
+    List<Queue> findByStatusInOrderByTokenNumberAsc(
+            List<String> statuses);
 }

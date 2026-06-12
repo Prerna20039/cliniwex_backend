@@ -38,11 +38,12 @@ public class AppointmentServiceImpl implements AppointmentService {
         Appointment appt = repo.findById(appointmentId)
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
-        if (!status.equals("ACCEPTED") &&
-            !status.equals("REJECTED")) {
+        if (!status.equals("ACCEPTED")
+        && !status.equals("CANCELLED")) {
 
-            throw new RuntimeException("Invalid status");
-        }
+    throw new RuntimeException(
+            "Status must be ACCEPTED or CANCELLED");
+}
 
         appt.setStatus(status);
 
