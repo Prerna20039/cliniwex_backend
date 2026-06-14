@@ -1,12 +1,11 @@
-package com.clinic.backend.repository;
+package com.clinic.backend.Repository;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.clinic.backend.entity.Appointment;
+import com.clinic.backend.Entity.Appointment;
 
 @Repository
 public interface AppointmentRepository
@@ -22,11 +21,4 @@ public interface AppointmentRepository
 
     // Dashboard counts
     long countByStatus(String status);
-
-    long countByDoctorIdAndAppointmentDate(
-            Long doctorId,
-            LocalDate appointmentDate);
-
-    List<Appointment> findByPatientId(Long patientId);
-    
 }

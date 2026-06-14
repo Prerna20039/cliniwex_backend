@@ -1,56 +1,23 @@
 package com.clinic.backend.service;
 
+import java.util.List;
 
 import com.clinic.backend.dto.Patient.AppointmentRequest;
 import com.clinic.backend.entity.Appointment;
-import com.clinic.backend.repository.AppointmentRepository;
-import org.springframework.stereotype.Service;
 
-import java.util.List;
+public interface AppointmentService {
 
-@Service
-public class AppointmentService {
+    Appointment bookAppointment(Long patientId, AppointmentRequest request);
 
-    private final AppointmentRepository appointmentRepository;
+    List<Appointment> getMyAppointments(Long patientId);
 
-    public AppointmentService(AppointmentRepository appointmentRepository) {
-        this.appointmentRepository = appointmentRepository;
-    }
+    void cancelAppointment(Long appointmentId);
 
-    public Appointment bookAppointment(Long patientId,
-                                       AppointmentRequest request) {
+    List<Appointment> getAllAppointments(Long doctorId);
 
-        long count =
-                appointmentRepository.countByDoctorIdAndAppointmentDate(
-                        request.getDoctorId(),
-                        request.getAppointmentDate());
+    List<Appointment> getPendingAppointments(Long doctorId);
 
-        Appointment appointment = new Appointment();
+    Appointment updateStatus(Long appointmentId, String status);
 
-        appointment.setPatientId(patientId);
-        appointment.setDoctorId(request.getDoctorId());
-        appointment.setAppointmentDate(request.getAppointmentDate());
-        appointment.setAppointmentTime(request.getAppointmentTime());
-        appointment.setReason(request.getReason());
-        appointment.setStatus("PENDING");
-        appointment.setTokenNumber((int) count + 1);
-
-        return appointmentRepository.save(appointment);
-    }
-
-    public List<Appointment> getMyAppointments(Long patientId) {
-        return appointmentRepository.findByPatientId(patientId);
-    }
-
-    public void cancelAppointment(Long appointmentId) {
-
-        Appointment appointment =
-                appointmentRepository.findById(appointmentId)
-                        .orElseThrow(() ->
-                                new RuntimeException("Appointment not found"));
-
-        appointment.setStatus("CANCELLED");
-
-        appointmentRepository.save(appointment);
-    }
+    
 }
