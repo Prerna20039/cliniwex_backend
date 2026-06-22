@@ -3,6 +3,8 @@ package com.clinic.backend.dto.Patient;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+
+
 public class AppointmentRequest {
 
     private Long doctorId;

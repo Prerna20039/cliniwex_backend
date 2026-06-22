@@ -12,6 +12,9 @@ import com.clinic.backend.entity.Appointment;
 public interface AppointmentRepository
         extends JpaRepository<Appointment, Long> {
 
+   // Check if patient already has appointment on this date
+    boolean existsByPatientIdAndAppointmentDate(Long patientId, LocalDate appointmentDate);
+
     // Get all appointments of a doctor
     List<Appointment> findByDoctorId(Long doctorId);
 
@@ -29,6 +32,8 @@ public interface AppointmentRepository
 
     List<Appointment> findByPatientId(Long patientId);
 
-   
     
+
+   
 }
+

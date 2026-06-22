@@ -7,10 +7,11 @@ import org.springframework.stereotype.Service;
 import com.clinic.backend.dto.Patient.AppointmentRequest;
 import com.clinic.backend.entity.Appointment;
 import com.clinic.backend.entity.Queue;
+import com.clinic.backend.exception.DuplicateAppointmentException;
 import com.clinic.backend.repository.AppointmentRepository;
 import com.clinic.backend.repository.QueueRepository;
-@Service
 
+@Service
 public class AppointmentServiceImpl implements AppointmentService {
 
     private final AppointmentRepository repo;
@@ -25,35 +26,46 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-public Appointment bookAppointment(Long patientId, AppointmentRequest request) {
-    long count = repo.countByDoctorIdAndAppointmentDate(
-            request.getDoctorId(),
-            request.getAppointmentDate());
+    public Appointment bookAppointment(Long patientId, AppointmentRequest request) {
+        // Prevent duplicate: check if patient already has appointment on this date
+        boolean exists = repo.existsByPatientIdAndAppointmentDate(
+                patientId,
+                request.getAppointmentDate());
 
-    Appointment appointment = new Appointment();
+        if (exists) {
+            throw new DuplicateAppointmentException(
+                    "You already have an appointment on " + request.getAppointmentDate());
+        }
 
-    appointment.setPatientId(patientId);
-    appointment.setDoctorId(request.getDoctorId());
-    appointment.setAppointmentDate(request.getAppointmentDate());
-    appointment.setAppointmentTime(request.getAppointmentTime());
+        long count = repo.countByDoctorIdAndAppointmentDate(
+                request.getDoctorId(),
+                request.getAppointmentDate());
 
-    // Only keep this if Appointment has a reason field
-    // appointment.setReason(request.getReason());
+        Appointment appointment = new Appointment();
 
-    appointment.setStatus("PENDING");
-    appointment.setTokenNumber((int) count + 1);
+        appointment.setPatientId(patientId);
+        appointment.setDoctorId(request.getDoctorId());
+        appointment.setAppointmentDate(request.getAppointmentDate());
+        appointment.setAppointmentTime(request.getAppointmentTime());
 
-    return repo.save(appointment);
-}
+        // Only keep this if Appointment has a reason field
+        // appointment.setReason(request.getReason());
 
-@Override
-public void cancelAppointment(Long appointmentId) {
-    Appointment appointment = repo.findById(appointmentId)
-            .orElseThrow(() -> new RuntimeException("Appointment not found"));
+        appointment.setStatus("PENDING");
+        appointment.setTokenNumber((int) count + 1);
 
-    appointment.setStatus("CANCELLED");
-    repo.save(appointment);
-}
+        return repo.save(appointment);
+    }
+
+    @Override
+    public void cancelAppointment(Long appointmentId) {
+        Appointment appointment = repo.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        appointment.setStatus("CANCELLED");
+        repo.save(appointment);
+    }
+
     @Override
     public List<Appointment> getAllAppointments(Long doctorId) {
         return repo.findByDoctorId(doctorId);
@@ -76,11 +88,11 @@ public void cancelAppointment(Long appointmentId) {
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
         if (!status.equals("ACCEPTED")
-        && !status.equals("CANCELLED")) {
+                && !status.equals("CANCELLED")) {
 
-    throw new RuntimeException(
-            "Status must be ACCEPTED or CANCELLED");
-}
+            throw new RuntimeException(
+                    "Status must be ACCEPTED or CANCELLED");
+        }
 
         appt.setStatus(status);
 

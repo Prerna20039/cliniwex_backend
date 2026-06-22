@@ -1,48 +1,87 @@
 package com.clinic.backend.controller;
 
-
 import com.clinic.backend.dto.Patient.AppointmentRequest;
 import com.clinic.backend.entity.Appointment;
+import com.clinic.backend.exception.DuplicateAppointmentException;
 import com.clinic.backend.service.AppointmentService;
+import com.clinic.backend.util.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/appointments")
+@RequestMapping("/api/appointments")
 public class AppointmentController {
 
-    private final AppointmentService appointmentService;
+    @Autowired
+    private AppointmentService appointmentService;
 
-    public AppointmentController(AppointmentService appointmentService) {
-        this.appointmentService = appointmentService;
+    // Book Appointment - prevents duplicates
+    @PostMapping("/book")
+    public ResponseEntity<?> bookAppointment(@RequestBody AppointmentRequest request) {
+        Long patientId = SecurityUtils.getCurrentPatientId();
+
+        if (patientId == null) {
+            return ResponseEntity.status(401).body(Map.of(
+                "success", false,
+                "message", "User not authenticated"
+            ));
+        }
+
+        try {
+            Appointment appointment = appointmentService.bookAppointment(patientId, request);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Appointment booked successfully",
+                "appointmentId", appointment.getAppointmentId(),
+                "tokenNumber", appointment.getTokenNumber()
+            ));
+
+        } catch (DuplicateAppointmentException e) {
+            return ResponseEntity.status(409).body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
     }
 
-    // Book Appointment
-    @PostMapping
-    public Appointment bookAppointment(
-            @RequestBody AppointmentRequest request) {
-
-        Long patientId = 1L; // Replace with JWT logged-in user
-
-        return appointmentService.bookAppointment(patientId, request);
-    }
-
-    // View My Appointments
+    // Get My Appointments
     @GetMapping("/my")
-    public List<Appointment> getMyAppointments() {
+    public ResponseEntity<?> getMyAppointments() {
+        Long patientId = SecurityUtils.getCurrentPatientId();
 
-        Long patientId = 1L; // Replace with JWT logged-in user
+        if (patientId == null) {
+            return ResponseEntity.status(401).body(Map.of(
+                "success", false,
+                "message", "User not authenticated"
+            ));
+        }
 
-        return appointmentService.getMyAppointments(patientId);
+        List<Appointment> appointments = appointmentService.getMyAppointments(patientId);
+        return ResponseEntity.ok(appointments);
     }
 
-    // Cancel Appointment
-    @DeleteMapping("/{id}")
-    public String cancelAppointment(@PathVariable Long id) {
+    // Your existing endpoints...
+    @GetMapping("/doctor/{doctorId}")
+    public List<Appointment> getAllAppointments(@PathVariable Long doctorId) {
+        return appointmentService.getAllAppointments(doctorId);
+    }
 
-        appointmentService.cancelAppointment(id);
+    @GetMapping("/doctor/{doctorId}/pending")
+    public List<Appointment> getPendingAppointments(@PathVariable Long doctorId) {
+        return appointmentService.getPendingAppointments(doctorId);
+    }
 
-        return "Appointment Cancelled";
+    @PutMapping("/{appointmentId}/status")
+    public Appointment updateStatus(@PathVariable Long appointmentId, @RequestParam String status) {
+        return appointmentService.updateStatus(appointmentId, status);
+    }
+
+    @PutMapping("/{appointmentId}/cancel")
+    public void cancelAppointment(@PathVariable Long appointmentId) {
+        appointmentService.cancelAppointment(appointmentId);
     }
 }
