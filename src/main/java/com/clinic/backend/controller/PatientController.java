@@ -1,35 +1,48 @@
 package com.clinic.backend.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
 import com.clinic.backend.dto.Patient.LoginRequest;
+import com.clinic.backend.dto.Patient.LoginResponse;
 import com.clinic.backend.dto.Patient.RegisterRequest;
 import com.clinic.backend.service.PatientService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/patient")
 public class PatientController {
 
     @Autowired
-    private PatientService patientService = new PatientService();
+    private PatientService patientService;
 
     @PostMapping("/register")
-    public String register(@RequestBody RegisterRequest request) {
-
+    public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
         System.out.println("REGISTER API HIT");
-
-        return patientService.register(request);
+        String result = patientService.register(request);
+        
+        if (result.equals("Email already in use")) {
+            return ResponseEntity.badRequest().body(result);
+        }
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest request) {
-
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         System.out.println("LOGIN API HIT");
-
-        return patientService.login(
+        LoginResponse response = patientService.login(
                 request.getEmail(),
                 request.getPassword()
         );
+        
+        if (response.getToken() == null) {
+            return ResponseEntity.status(401).body(response);
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    // Example protected endpoint - requires valid JWT
+    @GetMapping("/profile")
+    public ResponseEntity<String> getProfile() {
+        return ResponseEntity.ok("This is a protected endpoint. You have valid JWT!");
     }
 }

@@ -1,11 +1,15 @@
 package com.clinic.backend.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
+import com.clinic.backend.dto.Patient.LoginResponse;
 import com.clinic.backend.dto.Patient.RegisterRequest;
-import com.clinic.backend.repository.PatientRepository;
 import com.clinic.backend.entity.Patient;
+import com.clinic.backend.repository.PatientRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 @Service
 public class PatientService {
@@ -13,6 +17,17 @@ public class PatientService {
     @Autowired
     private PatientRepository patientRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private PatientDetailsService patientDetailsService;
 
     public String register(RegisterRequest request) {
         // Check if email already exists
@@ -20,33 +35,38 @@ public class PatientService {
             return "Email already in use";
         }
 
-        // Create new patient and save to database
+        // Create new patient with encoded password
         Patient patient = new Patient();
         patient.setName(request.getName());
         patient.setAge(request.getAge());
         patient.setGender(request.getGender());
         patient.setPhone(request.getPhone());
         patient.setEmail(request.getEmail());
-        patient.setPassword(request.getPassword()); // In production, hash the password!
+        patient.setPassword(passwordEncoder.encode(request.getPassword())); // Hash the password!
 
         patientRepository.save(patient);
         return "Registration successful";
     }
-    
 
-    public String login(String email, String password) {
-        // Find patient by email
-        Patient patient = patientRepository.findByEmail(email).orElse(null);
-        if (patient == null) {
-            return "Invalid email or password";
+    public LoginResponse login(String email, String password) {
+        // Authenticate using Spring Security
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, password)
+        );
+
+        // If authentication successful, generate JWT
+        if (authentication.isAuthenticated()) {
+            PatientDetails patientDetails = (PatientDetails) patientDetailsService.loadUserByUsername(email);
+            String jwtToken = jwtService.generateToken(patientDetails);
+            
+            return new LoginResponse(
+                    jwtToken,
+                    "Login successful",
+                    patientDetails.getPatient().getEmail(),
+                    patientDetails.getPatient().getName()
+            );
         }
 
-        // Check password (in production, use hashed passwords)
-        if (!patient.getPassword().equals(password)) {
-            return "Invalid email or password";
-        }
-
-        return "Login successful";
+        return new LoginResponse(null, "Invalid email or password", null, null);
     }
-    
 }
