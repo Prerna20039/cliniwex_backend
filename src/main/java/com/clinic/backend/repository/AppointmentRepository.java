@@ -34,8 +34,8 @@ public interface AppointmentRepository
     List<Appointment> findByPatientId(Long patientId);
 
     // Find patient's latest accepted appointment
-     Optional<Appointment> findFirstByPatientIdAndStatusOrderByCreatedAtDesc(Long patientId, String status);
-    
+    // AppointmentRepository.java
+        Optional<Appointment> findFirstByPatientIdAndStatusOrderByAppointmentDateDesc(Long patientId, String status);    
 
    
 }

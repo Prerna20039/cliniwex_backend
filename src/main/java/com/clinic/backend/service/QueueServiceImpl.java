@@ -105,8 +105,8 @@ public Queue completeConsultation(Long appointmentId) {
 @Override
 public StatsResponse getPatientStats(Long patientId) {
     Appointment appointment = appointmentRepository
-            .findFirstByPatientIdAndStatusOrderByCreatedAtDesc(patientId, "ACCEPTED")
-            .orElseThrow(() -> new RuntimeException("No active appointment found"));
+        .findFirstByPatientIdAndStatusOrderByAppointmentDateDesc(patientId, "ACCEPTED")
+        .orElseThrow(() -> new RuntimeException("No active appointment found"));
 
     Queue patientQueue = queueRepository
             .findByAppointmentId(appointment.getAppointmentId())
