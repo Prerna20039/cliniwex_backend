@@ -1,9 +1,10 @@
 package com.clinic.backend.service;
 
 import java.util.List;
-
+import java.util.Map;
 import com.clinic.backend.entity.Queue;
 import com.clinic.backend.dto.Patient.QueueResponse;
+import com.clinic.backend.dto.Patient.StatsResponse;
 
 public interface QueueService {
 
@@ -14,4 +15,6 @@ public interface QueueService {
     Queue completeConsultation(Long appointmentId);
 
     QueueResponse getQueueStatus(Long appointmentId);
+
+    StatsResponse getPatientStats(Long patientId);
 }

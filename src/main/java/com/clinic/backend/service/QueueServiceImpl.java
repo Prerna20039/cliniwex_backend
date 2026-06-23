@@ -1,6 +1,8 @@
 package com.clinic.backend.service;
 
 import java.util.List;
+import java.util.Map;
+import com.clinic.backend.entity.Queue;
 
 import org.springframework.stereotype.Service;
 
@@ -9,12 +11,15 @@ import com.clinic.backend.entity.Queue;
 import com.clinic.backend.repository.AppointmentRepository;
 import com.clinic.backend.repository.QueueRepository;
 import com.clinic.backend.dto.Patient.QueueResponse;
+import com.clinic.backend.dto.Patient.StatsResponse;
 
 @Service
 public class QueueServiceImpl implements QueueService {
 
     private final QueueRepository queueRepository;
     private final AppointmentRepository appointmentRepository;
+
+    private static final int AVG_TREATMENT_TIME_MINUTES = 15;
 
     public QueueServiceImpl(
             QueueRepository queueRepository,
@@ -94,5 +99,37 @@ public Queue completeConsultation(Long appointmentId) {
     appointmentRepository.save(appointment);
 
     return queueRepository.save(queue);
+}
+
+
+@Override
+public StatsResponse getPatientStats(Long patientId) {
+    Appointment appointment = appointmentRepository
+            .findFirstByPatientIdAndStatusOrderByCreatedAtDesc(patientId, "ACCEPTED")
+            .orElseThrow(() -> new RuntimeException("No active appointment found"));
+
+    Queue patientQueue = queueRepository
+            .findByAppointmentId(appointment.getAppointmentId())
+            .orElseThrow(() -> new RuntimeException("Patient not in queue"));
+
+    Integer yourToken = patientQueue.getTokenNumber();
+
+    Integer currentToken = queueRepository
+            .findTopByStatusOrderByTokenNumberAsc("WAITING")
+            .map(Queue::getTokenNumber)
+            .orElse(yourToken);
+
+    Long patientsAhead = queueRepository
+            .countByStatusAndTokenNumberLessThan("WAITING", yourToken);
+
+    int estimatedWaitMinutes = patientsAhead.intValue() * AVG_TREATMENT_TIME_MINUTES;
+
+    StatsResponse response = new StatsResponse();
+    response.setYourToken(yourToken);
+    response.setCurrentToken(currentToken);
+    response.setPatientsAhead(patientsAhead.intValue());
+    response.setEstimatedWaitMinutes(estimatedWaitMinutes);
+
+    return response;
 }
 }

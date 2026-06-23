@@ -8,12 +8,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.clinic.backend.dto.Patient.StatsResponse;
+
+
+import java.util.Map;
+import com.clinic.backend.service.QueueService;
+
 @RestController
 @RequestMapping("/api/patient")
 public class PatientController {
 
     @Autowired
     private PatientService patientService;
+
+    @Autowired
+    private QueueService queueService;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
@@ -45,4 +54,24 @@ public class PatientController {
     public ResponseEntity<String> getProfile() {
         return ResponseEntity.ok("This is a protected endpoint. You have valid JWT!");
     }
+
+
+
+    // GET /api/patient/stats?patientId=1
+    // GET /api/patient/stats?patientId=1
+@GetMapping("/stats")
+public ResponseEntity<?> getStats(@RequestParam(required = false) Long patientId) {
+    if (patientId == null) {
+        return ResponseEntity.badRequest()
+            .body(Map.of("error", "Patient ID is required"));
+    }
+
+    try {
+        StatsResponse stats = queueService.getPatientStats(patientId);
+        return ResponseEntity.ok(stats);
+    } catch (RuntimeException e) {
+        return ResponseEntity.badRequest()
+            .body(Map.of("error", e.getMessage()));
+    }
+}
 }

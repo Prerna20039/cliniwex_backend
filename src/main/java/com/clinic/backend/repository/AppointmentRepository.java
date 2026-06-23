@@ -2,6 +2,7 @@ package com.clinic.backend.repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -32,6 +33,8 @@ public interface AppointmentRepository
 
     List<Appointment> findByPatientId(Long patientId);
 
+    // Find patient's latest accepted appointment
+     Optional<Appointment> findFirstByPatientIdAndStatusOrderByCreatedAtDesc(Long patientId, String status);
     
 
    
