@@ -8,13 +8,15 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.clinic.backend.dto.DashboardResponse;
+import com.clinic.backend.dto.DoctorProfileResponse;
+import com.clinic.backend.dto.AnalyticsResponse;
 import com.clinic.backend.entity.Appointment;
 import com.clinic.backend.entity.Doctor;
 import com.clinic.backend.entity.Queue;
 import com.clinic.backend.repository.AppointmentRepository;
 import com.clinic.backend.repository.DoctorRepository;
 import com.clinic.backend.repository.QueueRepository;
-import com.clinic.backend.dto.DashboardResponse;
 
 @Service
 public class DoctorService {
@@ -33,17 +35,24 @@ public class DoctorService {
         this.queueRepository = queueRepository;
     }
 
-    public String registerDoctor(String name, String email, String password) {
+    // ================= REGISTER DOCTOR =================
+    public String registerDoctor(
+            String name,
+            String email,
+            String password,
+            String specialty,
+            String phone) {
 
         if (doctorRepository.existsByEmail(email)) {
             return "Email already exists";
         }
 
         Doctor doctor = new Doctor();
-
         doctor.setName(name);
         doctor.setEmail(email);
         doctor.setPassword(password);
+        doctor.setSpecialty(specialty);
+        doctor.setPhone(phone);
         doctor.setCreatedAt(LocalDateTime.now());
 
         doctorRepository.save(doctor);
@@ -51,11 +60,10 @@ public class DoctorService {
         return "Doctor Registered Successfully";
     }
 
+    // ================= LOGIN DOCTOR =================
     public String loginDoctor(String email, String password) {
 
-        Doctor doctor = doctorRepository
-                .findByEmail(email)
-                .orElse(null);
+        Doctor doctor = doctorRepository.findByEmail(email).orElse(null);
 
         if (doctor == null) {
             return "Doctor not found";
@@ -67,32 +75,27 @@ public class DoctorService {
 
         return "Login Successful";
     }
+
+    // ================= GET QUEUE =================
     public List<Queue> getQueue() {
 
-    return queueRepository
-            .findByStatusInOrderByTokenNumberAsc(
-                    List.of("WAITING", "IN_PROGRESS"));
-}
+        return queueRepository.findByStatusInOrderByTokenNumberAsc(
+                List.of("WAITING", "IN_PROGRESS"));
+    }
 
+    // ================= DASHBOARD STATS =================
     public DashboardResponse getDashboardStats() {
 
-        long totalAppointments =
-                appointmentRepository.count();
+        long totalAppointments = appointmentRepository.count();
+        long pendingAppointments = appointmentRepository.countByStatus("PENDING");
+        long acceptedAppointments = appointmentRepository.countByStatus("ACCEPTED");
+        long completedAppointments = appointmentRepository.countByStatus("COMPLETED");
+        long cancelledAppointments = appointmentRepository.countByStatus("CANCELLED");
 
-        long pendingAppointments =
-                appointmentRepository.countByStatus("PENDING");
+        long waiting = queueRepository.countByStatus("WAITING");
+        long inProgress = queueRepository.countByStatus("IN_PROGRESS");
 
-        long acceptedAppointments =
-                appointmentRepository.countByStatus("ACCEPTED");
-
-        long completedAppointments =
-                appointmentRepository.countByStatus("COMPLETED");
-
-        long cancelledAppointments =
-                appointmentRepository.countByStatus("CANCELLED");
-
-        long patientsInQueue =
-                queueRepository.countByStatus("WAITING");
+        long patientsInQueue = waiting + inProgress;
 
         return new DashboardResponse(
                 totalAppointments,
@@ -100,10 +103,10 @@ public class DoctorService {
                 acceptedAppointments,
                 completedAppointments,
                 cancelledAppointments,
-                patientsInQueue
-        );
+                patientsInQueue);
     }
 
+    // ================= CALL NEXT PATIENT =================
     public String callNextPatient() {
 
         Optional<Queue> currentPatient =
@@ -114,66 +117,126 @@ public class DoctorService {
         }
 
         Optional<Queue> nextPatient =
-                queueRepository
-                        .findFirstByStatusOrderByTokenNumberAsc("WAITING");
+                queueRepository.findFirstByStatusOrderByTokenNumberAsc("WAITING");
 
         if (nextPatient.isEmpty()) {
             return "No patients waiting";
         }
 
         Queue queue = nextPatient.get();
-
         queue.setStatus("IN_PROGRESS");
-
         queueRepository.save(queue);
 
         return "Patient moved to consultation";
     }
 
+    // ================= COMPLETE CONSULTATION =================
     public String completeConsultation(Long queueId) {
 
-        Queue queue =
-                queueRepository.findById(queueId)
-                        .orElse(null);
+        Queue queue = queueRepository.findById(queueId).orElse(null);
 
         if (queue == null) {
             return "Queue record not found";
         }
 
-        if (!queue.getStatus().equals("IN_PROGRESS")) {
+        if (!"IN_PROGRESS".equals(queue.getStatus())) {
             return "Only IN_PROGRESS patient can be completed";
         }
 
         queue.setStatus("DONE");
         queueRepository.save(queue);
 
-        Appointment appointment =
-                appointmentRepository
-                        .findById(queue.getAppointmentId())
-                        .orElse(null);
+        Appointment appointment = appointmentRepository
+                .findById(queue.getAppointmentId())
+                .orElse(null);
 
         if (appointment != null) {
-
             appointment.setStatus("COMPLETED");
-
             appointmentRepository.save(appointment);
         }
 
         return "Consultation completed successfully";
     }
+
+    // ================= QUEUE STATS =================
     public Map<String, Long> getQueueStats() {
 
-    Map<String, Long> stats = new HashMap<>();
+        Map<String, Long> stats = new HashMap<>();
 
-    stats.put("waiting",
-            queueRepository.countByStatus("WAITING"));
+        stats.put("waiting", queueRepository.countByStatus("WAITING"));
+        stats.put("inProgress", queueRepository.countByStatus("IN_PROGRESS"));
+        stats.put("completed", queueRepository.countByStatus("DONE"));
 
-    stats.put("inProgress",
-            queueRepository.countByStatus("IN_PROGRESS"));
+        return stats;
+    }
 
-    stats.put("completed",
-            queueRepository.countByStatus("DONE"));
+    // ================= DOCTOR PROFILE =================
+    public DoctorProfileResponse getDoctorProfile(Long doctorId) {
 
-    return stats;
-}
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        DoctorProfileResponse response = new DoctorProfileResponse();
+
+        response.setDoctorId(doctor.getId());
+        response.setName(doctor.getName());
+        response.setEmail(doctor.getEmail());
+        response.setPhoneNumber(doctor.getPhone());
+        response.setSpecialization(doctor.getSpecialty());
+
+        response.setQualification(doctor.getQualification());
+        response.setExperienceYears(doctor.getExperienceYears());
+        response.setConsultationFee(doctor.getConsultationFee());
+        response.setClinicName(doctor.getClinicName());
+        response.setClinicAddress(doctor.getClinicAddress());
+        response.setWorkingHours(doctor.getWorkingHours());
+        response.setBio(doctor.getBio());
+
+        return response;
+    }
+
+    // ================= UPDATE DOCTOR PROFILE =================
+    public Doctor updateDoctorProfile(Long doctorId, Doctor updatedDoctor) {
+
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        doctor.setQualification(updatedDoctor.getQualification());
+        doctor.setExperienceYears(updatedDoctor.getExperienceYears());
+        doctor.setConsultationFee(updatedDoctor.getConsultationFee());
+        doctor.setClinicName(updatedDoctor.getClinicName());
+        doctor.setClinicAddress(updatedDoctor.getClinicAddress());
+        doctor.setWorkingHours(updatedDoctor.getWorkingHours());
+        doctor.setBio(updatedDoctor.getBio());
+
+        return doctorRepository.save(doctor);
+    }
+
+    // ================= ANALYTICS =================
+    public AnalyticsResponse getAnalytics() {
+
+        long totalAppointments = appointmentRepository.count();
+        long pendingAppointments = appointmentRepository.countByStatus("PENDING");
+        long acceptedAppointments = appointmentRepository.countByStatus("ACCEPTED");
+        long completedAppointments = appointmentRepository.countByStatus("COMPLETED");
+        long cancelledAppointments = appointmentRepository.countByStatus("CANCELLED");
+
+        long waitingPatients = queueRepository.countByStatus("WAITING");
+        long inProgressPatients = queueRepository.countByStatus("IN_PROGRESS");
+        long completedConsultations = queueRepository.countByStatus("DONE");
+
+        long totalQueueEntries = queueRepository.count();
+
+        return new AnalyticsResponse(
+                totalAppointments,
+                pendingAppointments,
+                acceptedAppointments,
+                completedAppointments,
+                cancelledAppointments,
+                waitingPatients,
+                inProgressPatients,
+                completedConsultations,
+                totalQueueEntries
+        );
+    }
 }

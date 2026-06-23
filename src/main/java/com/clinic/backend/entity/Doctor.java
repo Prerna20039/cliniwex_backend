@@ -24,10 +24,39 @@ public class Doctor {
 
     private String password;
 
-    private LocalDateTime createdAt;
+    private String specialty;
+
+    private String phone;
+
+    // ================= PROFILE FIELDS =================
+
+    @Column(length = 1000)
+    private String bio;
+
+    private String qualification;
+
+    private Integer experienceYears;
+
+    private Double consultationFee;
+
+    private String clinicName;
+
+    private String clinicAddress;
+
+    private String workingHours;
+
+    // ================= SYSTEM FIELDS =================
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "is_live")
+    private boolean isLive = false;
 
     public Doctor() {
     }
+
+    // ================= GETTERS =================
 
     public Long getId() {
         return id;
@@ -45,9 +74,51 @@ public class Doctor {
         return password;
     }
 
+    public String getSpecialty() {
+        return specialty;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public String getQualification() {
+        return qualification;
+    }
+
+    public Integer getExperienceYears() {
+        return experienceYears;
+    }
+
+    public Double getConsultationFee() {
+        return consultationFee;
+    }
+
+    public String getClinicName() {
+        return clinicName;
+    }
+
+    public String getClinicAddress() {
+        return clinicAddress;
+    }
+
+    public String getWorkingHours() {
+        return workingHours;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
+    public boolean getIsLive() {
+        return isLive;
+    }
+
+    // ================= SETTERS =================
 
     public void setId(Long id) {
         this.id = id;
@@ -65,7 +136,47 @@ public class Doctor {
         this.password = password;
     }
 
+    public void setSpecialty(String specialty) {
+        this.specialty = specialty;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public void setQualification(String qualification) {
+        this.qualification = qualification;
+    }
+
+    public void setExperienceYears(Integer experienceYears) {
+        this.experienceYears = experienceYears;
+    }
+
+    public void setConsultationFee(Double consultationFee) {
+        this.consultationFee = consultationFee;
+    }
+
+    public void setClinicName(String clinicName) {
+        this.clinicName = clinicName;
+    }
+
+    public void setClinicAddress(String clinicAddress) {
+        this.clinicAddress = clinicAddress;
+    }
+
+    public void setWorkingHours(String workingHours) {
+        this.workingHours = workingHours;
+    }
+
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public void setIsLive(boolean isLive) {
+        this.isLive = isLive;
     }
 }

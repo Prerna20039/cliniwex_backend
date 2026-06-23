@@ -18,11 +18,14 @@ public class Queue {
 
     private Long appointmentId;
 
+    private Long doctorId;
+
     private Integer tokenNumber;
 
+    // WAITING, IN_PROGRESS, DONE
     private String status;
 
-    private LocalDateTime createdAt;
+    private final LocalDateTime createdAt;
 
     public Queue() {
         this.createdAt = LocalDateTime.now();
@@ -43,6 +46,14 @@ public class Queue {
 
     public void setAppointmentId(Long appointmentId) {
         this.appointmentId = appointmentId;
+    }
+
+    public Long getDoctorId() {
+        return doctorId;
+    }
+
+    public void setDoctorId(Long doctorId) {
+        this.doctorId = doctorId;
     }
 
     public Integer getTokenNumber() {
