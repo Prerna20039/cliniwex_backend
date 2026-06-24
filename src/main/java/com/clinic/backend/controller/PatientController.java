@@ -5,28 +5,26 @@ import com.clinic.backend.dto.Patient.LoginResponse;
 import com.clinic.backend.dto.Patient.ProfileResponse;
 import com.clinic.backend.dto.Patient.ProfileUpdateRequest;
 import com.clinic.backend.dto.Patient.RegisterRequest;
+import com.clinic.backend.dto.Patient.StatsResponse;
 import com.clinic.backend.service.PatientService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.clinic.backend.service.QueueService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.clinic.backend.dto.Patient.StatsResponse;
-
-
 import java.util.Map;
-import com.clinic.backend.service.QueueService;
-
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/patient")
 public class PatientController {
 
-    @Autowired
-    private PatientService patientService;
+    private final PatientService patientService;
+    private final QueueService queueService;
 
-    @Autowired
-    private QueueService queueService;
+    public PatientController(PatientService patientService, QueueService queueService) {
+        this.patientService = patientService;
+        this.queueService = queueService;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
@@ -53,33 +51,8 @@ public class PatientController {
         return ResponseEntity.ok(response);
     }
 
-    // Example protected endpoint - requires valid JWT
+    // GET /api/patient/profile?patientId=1
     @GetMapping("/profile")
-    public ResponseEntity<String> getProfile() {
-        return ResponseEntity.ok("This is a protected endpoint. You have valid JWT!");
-    }
-
-
-
-    // GET /api/patient/stats?patientId=1
-    // GET /api/patient/stats?patientId=1
-@GetMapping("/stats")
-public ResponseEntity<?> getStats(@RequestParam(required = false) Long patientId) {
-    if (patientId == null) {
-        return ResponseEntity.badRequest()
-            .body(Map.of("error", "Patient ID is required"));
-    }
-
-    try {
-        StatsResponse stats = queueService.getPatientStats(patientId);
-        return ResponseEntity.ok(stats);
-    } catch (RuntimeException e) {
-        return ResponseEntity.badRequest()
-            .body(Map.of("error", e.getMessage()));
-    }
-}
-
-@GetMapping("/profile")
     public ResponseEntity<?> getProfile(@RequestParam(required = false) Long patientId) {
         if (patientId == null) {
             return ResponseEntity.badRequest()
@@ -109,6 +82,23 @@ public ResponseEntity<?> getStats(@RequestParam(required = false) Long patientId
         try {
             ProfileResponse profile = patientService.updateProfile(patientId, request);
             return ResponseEntity.ok(profile);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // GET /api/patient/stats?patientId=1
+    @GetMapping("/stats")
+    public ResponseEntity<?> getStats(@RequestParam(required = false) Long patientId) {
+        if (patientId == null) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Patient ID is required"));
+        }
+
+        try {
+            StatsResponse stats = queueService.getPatientStats(patientId);
+            return ResponseEntity.ok(stats);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                 .body(Map.of("error", e.getMessage()));
