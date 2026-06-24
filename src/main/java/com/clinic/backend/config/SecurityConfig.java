@@ -28,32 +28,36 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
             .cors(cors -> {})
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                // Public auth endpoints (patient + doctor + any future)
-                .requestMatchers("/**/register", "/**/login").permitAll()
-                
-                // Public patient dashboard endpoints
-                .requestMatchers("/api/patient/stats").permitAll()
-                .requestMatchers("/api/patient/profile").permitAll()
-                .requestMatchers("/api/patient/queue-status").permitAll()
-                .requestMatchers("/api/patient/visits").permitAll()
-                .requestMatchers("/api/patient/appointments").permitAll()
-                
+
+                // Public authentication endpoints
+                .requestMatchers(
+                    "/api/patient/login",
+                    "/api/patient/register",
+                    "/api/doctor/login",
+                    "/api/doctor/register"
+                ).permitAll()
+
                 // Public queue endpoints
-                .requestMatchers("/api/queue/status").permitAll()
-                .requestMatchers("/api/queue/join").permitAll()
-                
-                // Public doctor endpoints
-                .requestMatchers("/api/appointments/doctor/**").permitAll()
-                
-                // Everything else requires JWT
+                .requestMatchers(
+                    "/api/queue/status",
+                    "/api/queue/join"
+                ).permitAll()
+
+                // Public doctor appointment endpoints
+                .requestMatchers(
+                    "/api/appointments/doctor/**"
+                ).permitAll()
+
+                // Everything else requires authentication
                 .anyRequest().authenticated()
             )
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -68,14 +72,18 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
+
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(patientDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
+
         return authProvider;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
+
         return config.getAuthenticationManager();
     }
 }
