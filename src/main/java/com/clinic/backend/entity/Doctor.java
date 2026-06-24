@@ -51,7 +51,7 @@ public class Doctor {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "is_live")
-    private boolean isLive = false;
+    private Boolean isLive = false;
 
     public Doctor() {
     }
@@ -114,9 +114,13 @@ public class Doctor {
         return createdAt;
     }
 
-    public boolean getIsLive() {
-        return isLive;
-    }
+    public Boolean getIsLive() {
+    return isLive;
+}
+
+public void setIsLive(Boolean isLive) {
+    this.isLive = isLive;
+}
 
     // ================= SETTERS =================
 

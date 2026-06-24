@@ -121,18 +121,16 @@ public class DoctorController {
     // ================= LIVE TOGGLE =================
 
     @PatchMapping("/{id}/live")
-    public ResponseEntity<?> toggleLive(
-            @PathVariable Long id) {
+public ResponseEntity<?> toggleLive(@PathVariable Long id) {
 
-        Doctor doctor = doctorRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Doctor not found"));
+    Doctor doctor = doctorRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
-        doctor.setIsLive(!doctor.getIsLive());
+    boolean current = Boolean.TRUE.equals(doctor.getIsLive());
+    doctor.setIsLive(!current);
 
-        return ResponseEntity.ok(
-                doctorRepository.save(doctor));
-    }
+    return ResponseEntity.ok(doctorRepository.save(doctor));
+}
 
     // ================= PROFILE =================
 
