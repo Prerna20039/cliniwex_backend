@@ -8,9 +8,10 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.clinic.backend.dto.AnalyticsResponse;
 import com.clinic.backend.dto.DashboardResponse;
 import com.clinic.backend.dto.DoctorProfileResponse;
-import com.clinic.backend.dto.AnalyticsResponse;
+import com.clinic.backend.dto.DoctorUpdateRequest;
 import com.clinic.backend.entity.Appointment;
 import com.clinic.backend.entity.Doctor;
 import com.clinic.backend.entity.Queue;
@@ -78,7 +79,6 @@ public class DoctorService {
 
     // ================= GET QUEUE =================
     public List<Queue> getQueue() {
-
         return queueRepository.findByStatusInOrderByTokenNumberAsc(
                 List.of("WAITING", "IN_PROGRESS"));
     }
@@ -170,11 +170,11 @@ public class DoctorService {
         return stats;
     }
 
-    // ================= DOCTOR PROFILE =================
-    public DoctorProfileResponse getDoctorProfile(Long doctorId) {
+    // ================= GET PROFILE (BY EMAIL) =================
+    public DoctorProfileResponse getDoctorProfileByEmail(String email) {
 
-        Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+        Doctor doctor = doctorRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Doctor not found with email: " + email));
 
         DoctorProfileResponse response = new DoctorProfileResponse();
 
@@ -195,21 +195,30 @@ public class DoctorService {
         return response;
     }
 
-    // ================= UPDATE DOCTOR PROFILE =================
-    public Doctor updateDoctorProfile(Long doctorId, Doctor updatedDoctor) {
+    // ================= UPDATE PROFILE (BY EMAIL) =================
+    public DoctorProfileResponse updateDoctorProfileByEmail(
+            String email,
+            DoctorUpdateRequest request) {
 
-        Doctor doctor = doctorRepository.findById(doctorId)
+        Doctor doctor = doctorRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
-        doctor.setQualification(updatedDoctor.getQualification());
-        doctor.setExperienceYears(updatedDoctor.getExperienceYears());
-        doctor.setConsultationFee(updatedDoctor.getConsultationFee());
-        doctor.setClinicName(updatedDoctor.getClinicName());
-        doctor.setClinicAddress(updatedDoctor.getClinicAddress());
-        doctor.setWorkingHours(updatedDoctor.getWorkingHours());
-        doctor.setBio(updatedDoctor.getBio());
+        doctor.setName(request.getName());
+        doctor.setPhone(request.getPhoneNumber());
+        doctor.setSpecialty(request.getSpecialization());
 
-        return doctorRepository.save(doctor);
+        doctor.setQualification(request.getQualification());
+        doctor.setExperienceYears(request.getExperienceYears());
+        doctor.setConsultationFee(request.getConsultationFee());
+
+        doctor.setClinicName(request.getClinicName());
+        doctor.setClinicAddress(request.getClinicAddress());
+        doctor.setWorkingHours(request.getWorkingHours());
+        doctor.setBio(request.getBio());
+
+        doctorRepository.save(doctor);
+
+        return getDoctorProfileByEmail(email);
     }
 
     // ================= ANALYTICS =================

@@ -3,17 +3,11 @@ package com.clinic.backend.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import com.clinic.backend.dto.AnalyticsResponse;
 import com.clinic.backend.dto.DoctorProfileResponse;
+import com.clinic.backend.dto.DoctorUpdateRequest;
 import com.clinic.backend.dto.LoginRequest;
 import com.clinic.backend.dto.RegisterRequest;
 import com.clinic.backend.dto.StatusUpdateRequest;
@@ -23,7 +17,6 @@ import com.clinic.backend.entity.Queue;
 import com.clinic.backend.repository.DoctorRepository;
 import com.clinic.backend.service.AppointmentService;
 import com.clinic.backend.service.DoctorService;
-import com.clinic.backend.dto.AnalyticsResponse;
 
 @RestController
 @RequestMapping("/api/doctors")
@@ -44,7 +37,6 @@ public class DoctorController {
     }
 
     // ================= REGISTER =================
-
     @PostMapping("/register")
     public String registerDoctor(@RequestBody RegisterRequest request) {
         return doctorService.registerDoctor(
@@ -56,7 +48,6 @@ public class DoctorController {
     }
 
     // ================= LOGIN =================
-
     @PostMapping("/login")
     public String loginDoctor(@RequestBody LoginRequest request) {
         return doctorService.loginDoctor(
@@ -65,11 +56,8 @@ public class DoctorController {
     }
 
     // ================= APPOINTMENTS =================
-
     @GetMapping("/appointments")
-    public List<Appointment> getAppointments(
-            @RequestParam Long doctorId) {
-
+    public List<Appointment> getAppointments(@RequestParam Long doctorId) {
         return appointmentService.getAllAppointments(doctorId);
     }
 
@@ -78,33 +66,24 @@ public class DoctorController {
             @PathVariable Long id,
             @RequestBody StatusUpdateRequest request) {
 
-        return appointmentService.updateStatus(
-                id,
-                request.getStatus());
+        return appointmentService.updateStatus(id, request.getStatus());
     }
 
     // ================= DASHBOARD =================
-
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboard() {
-        return ResponseEntity.ok(
-                doctorService.getDashboardStats());
+        return ResponseEntity.ok(doctorService.getDashboardStats());
     }
 
     // ================= QUEUE =================
-
     @PutMapping("/queue/call-next")
     public ResponseEntity<?> callNextPatient() {
-        return ResponseEntity.ok(
-                doctorService.callNextPatient());
+        return ResponseEntity.ok(doctorService.callNextPatient());
     }
 
     @PutMapping("/queue/complete/{queueId}")
-    public ResponseEntity<?> completeConsultation(
-            @PathVariable Long queueId) {
-
-        return ResponseEntity.ok(
-                doctorService.completeConsultation(queueId));
+    public ResponseEntity<?> completeConsultation(@PathVariable Long queueId) {
+        return ResponseEntity.ok(doctorService.completeConsultation(queueId));
     }
 
     @GetMapping("/queue")
@@ -114,12 +93,10 @@ public class DoctorController {
 
     @GetMapping("/queue/stats")
     public ResponseEntity<?> getQueueStats() {
-        return ResponseEntity.ok(
-                doctorService.getQueueStats());
+        return ResponseEntity.ok(doctorService.getQueueStats());
     }
 
     // ================= LIVE TOGGLE =================
-
     @PatchMapping("/{id}/live")
 public ResponseEntity<?> toggleLive(@PathVariable Long id) {
 
@@ -132,43 +109,31 @@ public ResponseEntity<?> toggleLive(@PathVariable Long id) {
     return ResponseEntity.ok(doctorRepository.save(doctor));
 }
 
-    // ================= PROFILE =================
+    // ================= PROFILE (EMAIL BASED) =================
 
-@GetMapping("/profile/{doctorId}")
-public ResponseEntity<?> getDoctorProfile(
-        @PathVariable Long doctorId) {
 
-    try {
+// ================= PROFILE GET (EMAIL ONLY) =================
+@GetMapping("/profile")
+public ResponseEntity<DoctorProfileResponse> getProfile(
+        @RequestParam String email) {
 
-        DoctorProfileResponse response =
-                doctorService.getDoctorProfile(doctorId);
-
-        return ResponseEntity.ok(response);
-
-    } catch (Exception e) {
-
-        e.printStackTrace();
-
-        return ResponseEntity.badRequest()
-                .body(e.getMessage());
-    }
+    return ResponseEntity.ok(
+            doctorService.getDoctorProfileByEmail(email));
 }
 
-    @PutMapping("/profile/{doctorId}")
-    public ResponseEntity<Doctor> updateDoctorProfile(
-            @PathVariable Long doctorId,
-            @RequestBody Doctor doctor) {
+// ================= PROFILE UPDATE (EMAIL ONLY) =================
+@PutMapping("/profile")
+public ResponseEntity<DoctorProfileResponse> updateProfile(
+        @RequestParam String email,
+        @RequestBody DoctorUpdateRequest request) {
 
-        return ResponseEntity.ok(
-                doctorService.updateDoctorProfile(
-                        doctorId,
-                        doctor));
-    }
+    return ResponseEntity.ok(
+            doctorService.updateDoctorProfileByEmail(email, request));
+}
 
+    // ================= ANALYTICS =================
     @GetMapping("/analytics")
     public ResponseEntity<AnalyticsResponse> getAnalytics() {
-
-        return ResponseEntity.ok(
-                doctorService.getAnalytics());
+        return ResponseEntity.ok(doctorService.getAnalytics());
     }
 }
