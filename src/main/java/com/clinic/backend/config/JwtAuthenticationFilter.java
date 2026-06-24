@@ -25,6 +25,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private PatientDetailsService patientDetailsService;
 
+    // Skip JWT validation for these public paths
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        return path.contains("/login") || 
+               path.contains("/register") ||
+               path.contains("/stats") ||
+               path.contains("/profile") ||
+               path.contains("/queue-status") ||
+               path.contains("/visits") ||
+               path.contains("/appointments/doctor/");
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, 
                                     HttpServletResponse response, 
@@ -35,7 +48,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String userEmail;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
+            // No token provided for protected endpoint → reject
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Missing or invalid JWT token\"}");
             return;
         }
 
