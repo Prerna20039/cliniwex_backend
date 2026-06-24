@@ -33,8 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                path.contains("/register") ||
                path.contains("/stats") ||
                path.contains("/profile") ||
-               path.contains("/queue-status") ||
-               path.contains("/visits") ||
+               path.contains("/queue/status") ||
                path.contains("/appointments/doctor/");
     }
 
