@@ -71,8 +71,7 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     // Find current token (lowest WAITING token_number)
     Optional<Queue> findCurrentToken();
 
-    // Count patients ahead of given token
-    Long countPatientsAhead(@Param("tokenNumber") Integer tokenNumber);
+    
 
     
 
