@@ -38,8 +38,8 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/patient/login",
                     "/api/patient/register",
-                    "/api/doctor/login",
-                    "/api/doctor/register"
+                    "/api/doctors/login",
+                    "/api/doctors/register"
                 ).permitAll()
 
                 // Public patient dashboard endpoints (no JWT needed)
@@ -59,7 +59,7 @@ public class SecurityConfig {
 
                 // Public doctor appointment endpoints
                 .requestMatchers(
-                    "/api/appointments/doctor/**"
+                    "/api/appointments/doctors/**"
                 ).permitAll()
 
                 // Everything else requires JWT authentication
