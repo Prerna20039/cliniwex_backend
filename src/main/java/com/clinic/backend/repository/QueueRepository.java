@@ -4,10 +4,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.clinic.backend.entity.Queue;
@@ -58,8 +57,6 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
 
     Optional<Queue> findTopByStatusOrderByTokenNumberAsc(String status);
 
-    
-
     // =====================================================
     // LISTING
     // =====================================================
@@ -68,10 +65,9 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
 
     List<Queue> findByStatusInOrderByTokenNumberAsc(List<String> statuses);
 
-    // Find current token (lowest WAITING token_number)
-    Optional<Queue> findCurrentToken();
-
-    
+    // =====================================================
+    // PATIENT STATS
+    // =====================================================
 
     
 
