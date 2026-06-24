@@ -1,6 +1,8 @@
 package com.clinic.backend.service;
 
 import com.clinic.backend.dto.Patient.LoginResponse;
+import com.clinic.backend.dto.Patient.ProfileResponse;
+import com.clinic.backend.dto.Patient.ProfileUpdateRequest;
 import com.clinic.backend.dto.Patient.RegisterRequest;
 import com.clinic.backend.entity.Patient;
 import com.clinic.backend.repository.PatientRepository;
@@ -10,6 +12,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import jakarta.transaction.Transactional;
+import com.clinic.backend.dto.Patient.ProfileUpdateRequest;
 
 @Service
 public class PatientService {
@@ -68,5 +72,42 @@ public class PatientService {
         }
 
         return new LoginResponse(null, "Invalid email or password", null, null);
+    }
+
+    
+    public ProfileResponse getProfile(Long patientId) {
+        Patient patient = patientRepository.findById(patientId)
+            .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+        return new ProfileResponse(
+            patient.getId(),
+            patient.getName(),
+            patient.getEmail(),
+            patient.getPhone(),
+            patient.getAge()
+        );
+    }
+
+    
+    @Transactional
+    public ProfileResponse updateProfile(Long patientId, ProfileUpdateRequest request) {
+        Patient patient = patientRepository.findById(patientId)
+            .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+        // Update fields
+        patient.setName(request.getName());
+        patient.setEmail(request.getEmail());
+        patient.setPhone(request.getPhone());
+        patient.setAge(request.getAge());
+
+        Patient updated = patientRepository.save(patient);
+
+        return new ProfileResponse(
+            updated.getId(),
+            updated.getName(),
+            updated.getEmail(),
+            updated.getPhone(),
+            updated.getAge()
+        );
     }
 }

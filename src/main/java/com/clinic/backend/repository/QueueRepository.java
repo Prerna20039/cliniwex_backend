@@ -34,8 +34,7 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     // Count patients ahead of given token
     Long countPatientsAhead(@Param("tokenNumber") Integer tokenNumber);
 
-    // Find patient's queue entry by patientId (through appointment)
-    Optional<Queue> findPatientQueueEntry(@Param("patientId") Long patientId);
+    
 
     // Count patients ahead (WAITING with token < given token)
     Long countByStatusAndTokenNumberLessThan(String status, Integer tokenNumber);

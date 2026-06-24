@@ -101,12 +101,11 @@ public Queue completeConsultation(Long appointmentId) {
     return queueRepository.save(queue);
 }
 
-
 @Override
 public StatsResponse getPatientStats(Long patientId) {
     Appointment appointment = appointmentRepository
-        .findFirstByPatientIdAndStatusOrderByAppointmentDateDesc(patientId, "ACCEPTED")
-        .orElseThrow(() -> new RuntimeException("No active appointment found"));
+            .findFirstByPatientIdAndStatusOrderByAppointmentDateDesc(patientId, "ACCEPTED")
+            .orElseThrow(() -> new RuntimeException("No active appointment found"));
 
     Queue patientQueue = queueRepository
             .findByAppointmentId(appointment.getAppointmentId())
@@ -122,7 +121,7 @@ public StatsResponse getPatientStats(Long patientId) {
     Long patientsAhead = queueRepository
             .countByStatusAndTokenNumberLessThan("WAITING", yourToken);
 
-    int estimatedWaitMinutes = patientsAhead.intValue() * AVG_TREATMENT_TIME_MINUTES;
+    int estimatedWaitMinutes = patientsAhead.intValue() * 10;
 
     StatsResponse response = new StatsResponse();
     response.setYourToken(yourToken);
