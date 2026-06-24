@@ -6,12 +6,14 @@ public class LoginResponse {
     private String message;
     private String email;
     private String name;
+    private Long patientId;
 
-    public LoginResponse(String token, String message, String email, String name) {
+    public LoginResponse(String token, String message, String email, String name, Long patientId) {
         this.token = token;
         this.message = message;
         this.email = email;
         this.name = name;
+        this.patientId = patientId;
     }
 
     // Getters and Setters
@@ -23,4 +25,11 @@ public class LoginResponse {
     public void setEmail(String email) { this.email = email; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public Long getPatientId() {
+        return patientId;
+    }
+    public void setPatientId(Long patientId) {
+        this.patientId = patientId;
+    }
 }

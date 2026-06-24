@@ -53,27 +53,35 @@ public class PatientService {
     }
 
     public LoginResponse login(String email, String password) {
-        // Authenticate using Spring Security
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
+
+    Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(email, password)
+    );
+
+    if (authentication.isAuthenticated()) {
+
+        PatientDetails patientDetails =
+                (PatientDetails) patientDetailsService.loadUserByUsername(email);
+
+        String jwtToken = jwtService.generateToken(patientDetails);
+
+        return new LoginResponse(
+                jwtToken,
+                "Login successful",
+                patientDetails.getPatient().getEmail(),
+                patientDetails.getPatient().getName(),
+                patientDetails.getPatient().getId()
         );
-
-        // If authentication successful, generate JWT
-        if (authentication.isAuthenticated()) {
-            PatientDetails patientDetails = (PatientDetails) patientDetailsService.loadUserByUsername(email);
-            String jwtToken = jwtService.generateToken(patientDetails);
-            
-            return new LoginResponse(
-                    jwtToken,
-                    "Login successful",
-                    patientDetails.getPatient().getEmail(),
-                    patientDetails.getPatient().getName()
-            );
-        }
-
-        return new LoginResponse(null, "Invalid email or password", null, null);
     }
 
+    return new LoginResponse(
+            null,
+            "Invalid email or password",
+            null,
+            null,
+            null
+    );
+}
     
     public ProfileResponse getProfile(Long patientId) {
         Patient patient = patientRepository.findById(patientId)
