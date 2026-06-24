@@ -27,8 +27,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+
         String path = request.getRequestURI();
 
+        // ❌ DOCTORS completely excluded from JWT
+        if (path.startsWith("/api/doctors")) {
+            return true;
+        }
+
+        // ❌ public patient endpoints
         return path.startsWith("/api/patient/login")
                 || path.startsWith("/api/patient/register")
                 || path.startsWith("/api/queue/status")
@@ -46,24 +53,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+        String authHeader = request.getHeader("Authorization");
 
-        // ✅ IMPORTANT FIX:
-        // If no token → just continue (DO NOT BLOCK REQUEST)
+        // If no token → just continue
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            final String jwt = authHeader.substring(7);
-            final String userEmail = jwtService.extractUsername(jwt);
+            String jwt = authHeader.substring(7);
+            String email = jwtService.extractUsername(jwt);
 
-            if (userEmail != null &&
-                    SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (email != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 UserDetails userDetails =
-                        patientDetailsService.loadUserByUsername(userEmail);
+                        patientDetailsService.loadUserByUsername(email);
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {
 
@@ -74,17 +80,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     userDetails.getAuthorities()
                             );
 
-                    authToken.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request)
-                    );
-
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
 
         } catch (Exception e) {
-            // ❌ DO NOT BLOCK REQUEST ON ERROR (prevents random 403)
-            System.out.println("JWT processing error: " + e.getMessage());
+            System.out.println("JWT error: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);
