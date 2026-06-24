@@ -78,7 +78,7 @@ public class QueueServiceImpl implements QueueService {
         Queue current = queueRepository
                 .findFirstByDoctorIdAndStatus(
                         queue.getDoctorId(),
-                        "WAITING"
+                        "IN_PROGRESS"
                 )
                 .orElse(queue);
 
