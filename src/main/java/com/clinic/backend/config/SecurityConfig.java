@@ -59,6 +59,8 @@ public class SecurityConfig {
 
                 .requestMatchers("/api/doctors/**").permitAll()
 
+                .requestMatchers("/api/agent/**").permitAll()
+
                 // Public doctor appointment endpoints
                 .requestMatchers(
                     "/api/appointments/doctors/**"

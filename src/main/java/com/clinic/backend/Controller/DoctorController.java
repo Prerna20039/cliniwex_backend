@@ -2,6 +2,7 @@ package com.clinic.backend.controller;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +16,7 @@ import com.clinic.backend.entity.Appointment;
 import com.clinic.backend.entity.Doctor;
 import com.clinic.backend.entity.Queue;
 import com.clinic.backend.repository.DoctorRepository;
+import com.clinic.backend.service.AgentService;
 import com.clinic.backend.service.AppointmentService;
 import com.clinic.backend.service.DoctorService;
 
@@ -25,6 +27,9 @@ public class DoctorController {
     private final DoctorService doctorService;
     private final AppointmentService appointmentService;
     private final DoctorRepository doctorRepository;
+
+    @Autowired
+    private AgentService agentService;
 
     public DoctorController(
             DoctorService doctorService,
@@ -105,6 +110,10 @@ public ResponseEntity<?> toggleLive(@PathVariable Long id) {
 
     boolean current = Boolean.TRUE.equals(doctor.getIsLive());
     doctor.setIsLive(!current);
+
+    if (doctor.getIsLive()) {
+        agentService.processDoctorLive(id);
+    }
 
     return ResponseEntity.ok(doctorRepository.save(doctor));
 }
