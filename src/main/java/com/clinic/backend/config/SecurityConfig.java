@@ -53,9 +53,9 @@ public class SecurityConfig {
 
                 // Public queue endpoints
                 .requestMatchers(
-                    "/api/queue/status",
-                    "/api/queue/join"
-                ).permitAll()
+    "/api/queue/status/**",
+    "/api/queue/join/**"
+).permitAll()
 
                 // Public doctor appointment endpoints
                 .requestMatchers(
