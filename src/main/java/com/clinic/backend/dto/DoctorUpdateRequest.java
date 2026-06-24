@@ -1,16 +1,15 @@
 package com.clinic.backend.dto;
 
-public class DoctorProfileResponse {
+public class DoctorUpdateRequest {
 
-    private Long doctorId;
     private String name;
-    private String email;
     private String phoneNumber;
     private String specialization;
 
     private String qualification;
     private Integer experienceYears;
     private Double consultationFee;
+
     private String clinicName;
     private String clinicAddress;
     private String workingHours;
@@ -18,25 +17,11 @@ public class DoctorProfileResponse {
 
     // getters & setters
 
-    public Long getDoctorId() {
-        return doctorId;
-    }
-    public void setDoctorId(Long doctorId) {
-        this.doctorId = doctorId;
-    }
-
     public String getName() {
         return name;
     }
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getPhoneNumber() {
