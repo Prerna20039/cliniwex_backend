@@ -38,38 +38,60 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, 
-                                    HttpServletResponse response, 
-                                    FilterChain filterChain) throws ServletException, IOException {
-        
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
+protected void doFilterInternal(HttpServletRequest request,
+                                HttpServletResponse response,
+                                FilterChain filterChain)
+        throws ServletException, IOException {
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            // No token provided for protected endpoint → reject
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Missing or invalid JWT token\"}");
-            return;
-        }
+    String path = request.getRequestURI();
 
-        jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
+    // ✅ PUBLIC ENDPOINTS SKIP COMPLETELY
+    if (path.contains("/login") ||
+        path.contains("/register") ||
+        path.contains("/stats") ||
+        path.contains("/profile") ||
+        path.contains("/queue/status") ||
+        path.contains("/queue/join") ||
+        path.contains("/appointments/doctor/")) {
 
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.patientDetailsService.loadUserByUsername(userEmail);
-            
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-        }
         filterChain.doFilter(request, response);
+        return;
     }
+
+    // 🔐 JWT REQUIRED ONLY FOR PROTECTED ENDPOINTS
+    final String authHeader = request.getHeader("Authorization");
+
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"error\":\"Missing or invalid JWT token\"}");
+        return;
+    }
+
+    final String jwt = authHeader.substring(7);
+    final String userEmail = jwtService.extractUsername(jwt);
+
+    if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+        UserDetails userDetails = patientDetailsService.loadUserByUsername(userEmail);
+
+        if (jwtService.isTokenValid(jwt, userDetails)) {
+
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+
+            authToken.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
+    }
+
+    filterChain.doFilter(request, response);
+}
 }
