@@ -32,7 +32,24 @@ public class SecurityConfig {
             .cors(cors -> {})
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/patient/register", "/api/patient/login").permitAll()
+                // Public auth endpoints (patient + doctor + any future)
+                .requestMatchers("/**/register", "/**/login").permitAll()
+                
+                // Public patient dashboard endpoints
+                .requestMatchers("/api/patient/stats").permitAll()
+                .requestMatchers("/api/patient/profile").permitAll()
+                .requestMatchers("/api/patient/queue-status").permitAll()
+                .requestMatchers("/api/patient/visits").permitAll()
+                .requestMatchers("/api/patient/appointments").permitAll()
+                
+                // Public queue endpoints
+                .requestMatchers("/api/queue/status").permitAll()
+                .requestMatchers("/api/queue/join").permitAll()
+                
+                // Public doctor endpoints
+                .requestMatchers("/api/appointments/doctor/**").permitAll()
+                
+                // Everything else requires JWT
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
