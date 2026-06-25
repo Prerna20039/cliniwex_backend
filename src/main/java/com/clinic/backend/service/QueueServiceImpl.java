@@ -50,48 +50,48 @@ public class QueueServiceImpl implements QueueService {
     // CALL NEXT PATIENT
     // =========================
     @Override
-public Queue callNextPatient(Long doctorId) {
+        public Queue callNextPatient(Long doctorId) {
 
-    Queue current = queueRepository
-            .findFirstByDoctorIdAndStatus(
-                    doctorId,
-                    "IN_PROGRESS"
-            )
-            .orElse(null);
+        Queue current = queueRepository
+                .findFirstByDoctorIdAndStatus(
+                        doctorId,
+                        "IN_PROGRESS"
+                )
+                .orElse(null);
 
-    if (current != null) {
-        throw new RuntimeException(
-                "Already a patient in consultation"
+        if (current != null) {
+                throw new RuntimeException(
+                        "Already a patient in consultation"
+                );
+        }
+
+        Queue next = queueRepository
+                .findFirstByDoctorIdAndStatusOrderByTokenNumberAsc(
+                        doctorId,
+                        "WAITING"
+                )
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "No waiting patients"
+                        ));
+
+        next.setStatus("IN_PROGRESS");
+
+        Queue savedQueue = queueRepository.save(next);
+
+        // TEMP TEST
+        Appointment appointment = appointmentRepository
+                .findById(savedQueue.getAppointmentId())
+                .orElse(null);
+
+        if (appointment != null) {
+        sendPatientStatsUpdate(
+                appointment.getPatientId()
         );
-    }
+        }
 
-    Queue next = queueRepository
-            .findFirstByDoctorIdAndStatusOrderByTokenNumberAsc(
-                    doctorId,
-                    "WAITING"
-            )
-            .orElseThrow(() ->
-                    new RuntimeException(
-                            "No waiting patients"
-                    ));
-
-    next.setStatus("IN_PROGRESS");
-
-Queue savedQueue = queueRepository.save(next);
-
-// TEMP TEST
-Appointment appointment = appointmentRepository
-        .findById(savedQueue.getAppointmentId())
-        .orElse(null);
-
-if (appointment != null) {
-    sendPatientStatsUpdate(
-            appointment.getPatientId()
-    );
-}
-
-return savedQueue;
-}
+        return savedQueue;
+        }
     // =========================
     // QUEUE STATUS
     // =========================
@@ -158,9 +158,7 @@ public Queue completeConsultation(Long appointmentId) {
     return savedQueue;
 }
 private void sendPatientStatsUpdate(Long patientId) {
-
     try {
-
         StatsResponse stats = getPatientStats(patientId);
         System.out.println(
             "Sending websocket update to patient: "
