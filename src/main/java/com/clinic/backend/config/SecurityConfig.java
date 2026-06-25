@@ -65,6 +65,13 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/appointments/doctors/**"
                 ).permitAll()
+                    
+                .requestMatchers(
+                "/auth/**",
+                "/ws/**",
+                "/ws"
+                ).permitAll()
+                
 
                 // Everything else requires JWT authentication
                 .anyRequest().authenticated()

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import com.clinic.backend.entity.Queue;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.clinic.backend.entity.Appointment;
@@ -20,6 +22,9 @@ public class QueueServiceImpl implements QueueService {
     private final AppointmentRepository appointmentRepository;
 
     private static final int AVG_TREATMENT_TIME_MINUTES = 15;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     public QueueServiceImpl(
             QueueRepository queueRepository,
@@ -45,26 +50,40 @@ public class QueueServiceImpl implements QueueService {
     // CALL NEXT PATIENT
     // =========================
     @Override
-    public Queue callNextPatient(Long doctorId) {
+public Queue callNextPatient(Long doctorId) {
 
-        Queue current = queueRepository
-                .findFirstByDoctorIdAndStatus(doctorId, "IN_PROGRESS")
-                .orElse(null);
+    Queue current = queueRepository
+            .findFirstByDoctorIdAndStatus(
+                    doctorId,
+                    "IN_PROGRESS"
+            )
+            .orElse(null);
 
-        if (current != null) {
-            throw new RuntimeException("Already a patient in consultation");
-        }
-
-        Queue next = queueRepository
-                .findFirstByDoctorIdAndStatusOrderByTokenNumberAsc(doctorId, "WAITING")
-                .orElseThrow(() -> new RuntimeException("No waiting patients"));
-
-        next.setStatus("IN_PROGRESS");
-
-        return queueRepository.save(next);
+    if (current != null) {
+        throw new RuntimeException(
+                "Already a patient in consultation"
+        );
     }
 
-    
+    Queue next = queueRepository
+            .findFirstByDoctorIdAndStatusOrderByTokenNumberAsc(
+                    doctorId,
+                    "WAITING"
+            )
+            .orElseThrow(() ->
+                    new RuntimeException(
+                            "No waiting patients"
+                    ));
+
+    next.setStatus("IN_PROGRESS");
+
+    Queue savedQueue =
+            queueRepository.save(next);
+
+    notifyAllWaitingPatients(doctorId);
+
+    return savedQueue;
+}
     // =========================
     // QUEUE STATUS
     // =========================
@@ -95,27 +114,65 @@ public class QueueServiceImpl implements QueueService {
         return response;
     }
 
-    @Override
+@Override
 public Queue completeConsultation(Long appointmentId) {
 
     Queue queue = queueRepository
             .findByAppointmentId(appointmentId)
             .orElseThrow(() ->
-                    new RuntimeException("Queue not found for appointment " + appointmentId));
+                    new RuntimeException(
+                            "Queue not found for appointment "
+                                    + appointmentId
+                    ));
 
-    Appointment appointment = appointmentRepository
-            .findById(appointmentId)
-            .orElseThrow(() ->
-                    new RuntimeException("Appointment not found: " + appointmentId));
+    Appointment appointment =
+            appointmentRepository
+                    .findById(appointmentId)
+                    .orElseThrow(() ->
+                            new RuntimeException(
+                                    "Appointment not found: "
+                                            + appointmentId
+                            ));
 
     queue.setStatus("DONE");
+
     appointment.setStatus("COMPLETED");
 
     appointmentRepository.save(appointment);
 
-    return queueRepository.save(queue);
-}
+    Queue savedQueue =
+            queueRepository.save(queue);
 
+    notifyAllWaitingPatients(
+            queue.getDoctorId()
+    );
+
+    return savedQueue;
+}
+private void sendPatientStatsUpdate(Long patientId) {
+
+    try {
+
+        StatsResponse stats = getPatientStats(patientId);
+
+        messagingTemplate.convertAndSend(
+                "/topic/stats/" + patientId,
+                stats
+        );
+
+        System.out.println(
+                "WebSocket update sent to patient "
+                        + patientId
+        );
+
+    } catch (Exception e) {
+
+        System.out.println(
+                "Unable to send websocket update for patient "
+                        + patientId
+        );
+    }
+}
 @Override
 public StatsResponse getPatientStats(Long patientId) {
     Appointment appointment = appointmentRepository
@@ -128,10 +185,13 @@ public StatsResponse getPatientStats(Long patientId) {
 
     Integer yourToken = patientQueue.getTokenNumber();
 
-    Integer currentToken = queueRepository
-            .findTopByStatusOrderByTokenNumberAsc("WAITING")
-            .map(Queue::getTokenNumber)
-            .orElse(yourToken);
+   Integer currentToken = queueRepository
+        .findFirstByDoctorIdAndStatus(
+                patientQueue.getDoctorId(),
+                "IN_PROGRESS"
+        )
+        .map(Queue::getTokenNumber)
+        .orElse(yourToken);
 
     Long patientsAhead = queueRepository
             .countByStatusAndTokenNumberLessThan("WAITING", yourToken);
@@ -145,5 +205,30 @@ public StatsResponse getPatientStats(Long patientId) {
     response.setEstimatedWaitMinutes(estimatedWaitMinutes);
 
     return response;
+}
+
+private void notifyAllWaitingPatients(Long doctorId) {
+
+    List<Queue> queues =
+            queueRepository
+                    .findByDoctorIdAndStatusInOrderByTokenNumberAsc(
+                            doctorId,
+                            List.of("WAITING", "IN_PROGRESS")
+                    );
+
+    for (Queue queue : queues) {
+
+        Appointment appointment =
+                appointmentRepository
+                        .findById(queue.getAppointmentId())
+                        .orElse(null);
+
+        if (appointment != null) {
+
+            sendPatientStatsUpdate(
+                    appointment.getPatientId()
+            );
+        }
+    }
 }
 }
