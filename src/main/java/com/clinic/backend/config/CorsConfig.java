@@ -14,7 +14,8 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOrigins(
-                            "http://localhost:3000"
+                            "http://localhost:3000",
+                            "https://cliniwex-frontend.vercel.app/"
                         )
                         .allowedMethods("*")
                         .allowedHeaders("*");

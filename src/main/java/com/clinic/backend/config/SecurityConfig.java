@@ -69,7 +69,8 @@ public class SecurityConfig {
                 .requestMatchers(
                 "/auth/**",
                 "/ws/**",
-                "/ws"
+                "/ws",
+                "/test/**"
                 ).permitAll()
                 
 
