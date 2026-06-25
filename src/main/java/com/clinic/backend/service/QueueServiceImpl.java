@@ -77,12 +77,20 @@ public Queue callNextPatient(Long doctorId) {
 
     next.setStatus("IN_PROGRESS");
 
-    Queue savedQueue =
-            queueRepository.save(next);
+Queue savedQueue = queueRepository.save(next);
 
-    notifyAllWaitingPatients(doctorId);
+// TEMP TEST
+Appointment appointment = appointmentRepository
+        .findById(savedQueue.getAppointmentId())
+        .orElse(null);
 
-    return savedQueue;
+if (appointment != null) {
+    sendPatientStatsUpdate(
+            appointment.getPatientId()
+    );
+}
+
+return savedQueue;
 }
     // =========================
     // QUEUE STATUS
