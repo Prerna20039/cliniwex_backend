@@ -154,16 +154,17 @@ private void sendPatientStatsUpdate(Long patientId) {
     try {
 
         StatsResponse stats = getPatientStats(patientId);
+        System.out.println(
+            "Sending websocket update to patient: "
+            + patientId
+        );
 
         messagingTemplate.convertAndSend(
                 "/topic/stats/" + patientId,
                 stats
         );
 
-        System.out.println(
-                "WebSocket update sent to patient "
-                        + patientId
-        );
+        
 
     } catch (Exception e) {
 
@@ -191,7 +192,15 @@ public StatsResponse getPatientStats(Long patientId) {
                 "IN_PROGRESS"
         )
         .map(Queue::getTokenNumber)
-        .orElse(yourToken);
+        .orElseGet(() ->
+                queueRepository
+                        .findFirstByDoctorIdAndStatusOrderByTokenNumberAsc(
+                                patientQueue.getDoctorId(),
+                                "WAITING"
+                        )
+                        .map(Queue::getTokenNumber)
+                        .orElse(0)
+        );
 
     Long patientsAhead = queueRepository
             .countByStatusAndTokenNumberLessThan("WAITING", yourToken);
